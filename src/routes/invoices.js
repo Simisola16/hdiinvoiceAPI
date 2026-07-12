@@ -19,7 +19,7 @@ router.use(authGuard);
 // ─── List Invoices (with filters) ─────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const { dateFrom, dateTo, amountMin, amountMax, companyName } = req.query;
+    const { dateFrom, dateTo, amount, companyName } = req.query;
 
     const filter = {};
 
@@ -34,11 +34,9 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // Amount range filter (on grandTotal)
-    if (amountMin || amountMax) {
-      filter.grandTotal = {};
-      if (amountMin) filter.grandTotal.$gte = Number(amountMin);
-      if (amountMax) filter.grandTotal.$lte = Number(amountMax);
+    // Amount filter (exact match on grandTotal)
+    if (amount) {
+      filter.grandTotal = Number(amount);
     }
 
     // Company name filter — resolve to company ID first
