@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HCA Invoice {{INVOICE_NUMBER}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      color: #000;
+      background: #fff;
+      width: 210mm;
+      min-height: 297mm;
+    }
+
+    /* ══════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════ */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      padding: 14px 24px 0 24px;
+      gap: 14px;
+    }
+
+    .header-logo {
+      width: 115px;
+      min-width: 115px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-logo img {
+      width: 110px;
+      height: 110px;
+      object-fit: contain;
+    }
+
+    .header-text {
+      flex: 1;
+      padding-top: 0;
+    }
+
+    .header-arabic {
+      font-size: 20px;
+      color: #c00000;
+      font-weight: bold;
+      direction: rtl;
+      text-align: right;
+      margin-bottom: 1px;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .header-title {
+      font-size: 30px;
+      font-weight: 900;
+      color: #1e4620;
+      line-height: 1;
+      font-family: Arial Black, Arial, sans-serif;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+    }
+
+    .header-subsidiary {
+      font-size: 9px;
+      color: #000;
+      margin-top: 3px;
+      font-style: italic;
+      text-align: center;
+    }
+
+    .header-parent {
+      font-size: 11px;
+      font-weight: bold;
+      color: #000;
+      text-align: center;
+    }
+
+    .header-address {
+      font-size: 8px;
+      color: #c00000;
+      line-height: 1.55;
+      margin-top: 2px;
+      text-align: center;
+    }
+
+    .header-contact {
+      font-size: 8.5px;
+      color: #000;
+      margin-top: 2px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* Gold gradient accent strip */
+    .header-strip {
+      height: 8px;
+      background: linear-gradient(to right, #b8860b 0%, #f5d060 30%, #c8a820 50%, #f5d060 70%, #b8860b 100%);
+      margin: 8px 0 0 0;
+    }
+
+    /* ══════════════════════════════════════════
+       INVOICE TITLE + NUMBER
+       ══════════════════════════════════════════ */
+    .invoice-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 24px 6px 24px;
+    }
+
+    .invoice-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #c00000;
+      font-family: Arial Black, Arial, sans-serif;
+      letter-spacing: 1px;
+      font-style: italic;
+    }
+
+    .invoice-number-block {
+      font-size: 13px;
+      font-weight: bold;
+      color: #000;
+      text-align: right;
+    }
+
+    .invoice-number-block .inv-label {
+      font-weight: bold;
+    }
+
+    .invoice-number-block .inv-value {
+      border-bottom: 1.5px solid #000;
+      padding-bottom: 1px;
+      padding-left: 6px;
+      min-width: 170px;
+      display: inline-block;
+      font-weight: bold;
+    }
+
+    /* ══════════════════════════════════════════
+       CLIENT SECTION
+       ══════════════════════════════════════════ */
+    .client-section {
+      padding: 2px 24px;
+    }
+
+    .client-row {
+      display: flex;
+      align-items: baseline;
+      margin-bottom: 5px;
+    }
+
+    .client-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      min-width: 78px;
+    }
+
+    .client-value {
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      border-bottom: 1.5px solid #000;
+      flex: 1;
+      padding-bottom: 1px;
+      padding-left: 6px;
+      min-height: 15px;
+    }
+
+    /* Tel + Date row */
+    .tel-date-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 2px 24px 8px 24px;
+    }
+
+    .tel-block {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .tel-value {
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+      border-bottom: 1.5px solid #000;
+      padding-bottom: 1px;
+      padding-left: 6px;
+      min-width: 220px;
+      min-height: 15px;
+    }
+
+    .date-block {
+      font-size: 12px;
+      font-weight: bold;
+      color: #000;
+    }
+
+    .date-block .date-value {
+      border-bottom: 1.5px solid #000;
+      padding-bottom: 1px;
+      padding-left: 6px;
+      min-width: 150px;
+      display: inline-block;
+    }
+
+    /* ══════════════════════════════════════════
+       SERVICE TABLE
+       ══════════════════════════════════════════ */
+    .table-wrapper {
+      padding: 0 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 2px solid #000;
+    }
+
+    thead tr {
+      background-color: #c8d8b0;
+    }
+
+    thead th {
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1.5px solid #000;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+
+    thead th.desc-col {
+      text-align: center;
+    }
+
+    tbody tr {
+      height: 24px;
+      background-color: #fff;
+    }
+
+    tbody td {
+      padding: 4px 6px;
+      font-size: 11.5px;
+      border: 1px solid #000;
+      text-align: center;
+      vertical-align: middle;
+      color: #000;
+    }
+
+    tbody td.sn-col {
+      text-align: center;
+      width: 38px;
+    }
+
+    tbody td.desc-col {
+      text-align: left;
+      padding-left: 10px;
+    }
+
+    tbody td.amount-col {
+      text-align: right;
+      padding-right: 10px;
+      font-weight: normal;
+    }
+
+    /* Grand Total row — bank info left, total right */
+    tr.grand-total-row td {
+      border: 1.5px solid #000;
+      padding: 6px 8px;
+      vertical-align: middle;
+    }
+
+    tr.grand-total-row td.bank-cell {
+      background: #fff !important;
+      text-align: left;
+      vertical-align: top;
+      padding: 6px 10px;
+    }
+
+    tr.grand-total-row td.grand-label-cell {
+      background: #c8d8b0 !important;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    tr.grand-total-row td.grand-amount-cell {
+      background: #c8d8b0 !important;
+      text-align: right;
+      font-size: 13px;
+      font-weight: bold;
+      padding-right: 10px;
+    }
+
+    .bank-info {
+      font-size: 8.5px;
+      color: #000;
+      line-height: 1.7;
+      font-weight: normal;
+    }
+
+    .bank-info strong {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    /* ══════════════════════════════════════════
+       FOOTER
+       ══════════════════════════════════════════ */
+    .footer-section {
+      padding: 10px 24px 0 24px;
+    }
+
+    .amount-words-row {
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .words-label {
+      font-weight: normal;
+    }
+
+    .words-value {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1.5px solid #000;
+      margin: 8px 0;
+    }
+
+    /* Terms box — exactly as in scan */
+    .terms-box {
+      border: 1.5px solid #4e7a3e;
+      background-color: #c8d8b0;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .terms-label {
+      font-size: 17px;
+      font-weight: bold;
+      color: #1e4620;
+      min-width: 75px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .terms-text {
+      font-size: 9px;
+      color: #000;
+      font-style: italic;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* Signature section */
+    .signature-section {
+      text-align: right;
+      padding: 6px 24px 12px 24px;
+    }
+
+    .signature-image-area {
+      min-height: 44px;
+      margin-bottom: 2px;
+    }
+
+    .signature-line {
+      border-top: 1.5px solid #000;
+      width: 210px;
+      margin-left: auto;
+      padding-top: 4px;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    /* Bottom banner */
+    .bottom-banner {
+      background-color: #1e4620;
+      color: #fff;
+      text-align: center;
+      padding: 11px 0;
+      font-size: 17px;
+      font-style: italic;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════ -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="{{LOGO_BASE64}}" alt="HCA Logo" />
+    </div>
+    <div class="header-text">
+      <div class="header-arabic">هيئة ترخيص منتجات الحلال</div>
+      <div class="header-title">HALAL CERTIFICATION AUTHORITY (HCA)</div>
+      <div class="header-subsidiary">A Subsidiary of</div>
+      <div class="header-parent">Halal &amp; Haram Distinction Development Initiative (HDI)</div>
+      <div class="header-address">
+        <em>Corporate Secretariat:</em> 9a, Wing 1, Abiodun Fasakin St., Anthony Village, Idi-Iroko Bus-Stop, Lagos.<br/>
+        <em>Branch Office:</em> 67, Ladipo Street, Opposite Ladipo Police Post, Mushin, Lagos State.
+      </div>
+      <div class="header-contact">
+        <em>Tel:</em> 08023519433, 08023470542, 08037218855<br/>
+        <em>Website:</em> www.halalcert.com.ng &nbsp;|&nbsp; <em>E-mail:</em> info@halalcert.com.ng
+      </div>
+    </div>
+  </div>
+
+  <!-- Gold gradient strip -->
+  <div class="header-strip"></div>
+
+  <!-- ══════════════════════════════════════════
+       INVOICE TITLE + NUMBER
+       ══════════════════════════════════════════ -->
+  <div class="invoice-title-row">
+    <div class="invoice-title">INVOICE</div>
+    <div class="invoice-number-block">
+      <span class="inv-label">Invoice No:</span>
+      <span class="inv-value">{{INVOICE_NUMBER}}</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CLIENT DETAILS
+       ══════════════════════════════════════════ -->
+  <div class="client-section">
+    <div class="client-row">
+      <div class="client-label">Client:</div>
+      <div class="client-value">{{CLIENT_NAME}}</div>
+    </div>
+    <div class="client-row">
+      <div class="client-label">Contact:</div>
+      <div class="client-value">{{CLIENT_CONTACT}}</div>
+    </div>
+  </div>
+
+  <!-- Tel + Date -->
+  <div class="tel-date-row">
+    <div class="tel-block">
+      <div class="client-label">Tel:</div>
+      <div class="tel-value">{{CLIENT_TEL}}</div>
+    </div>
+    <div class="date-block">
+      Date: <span class="date-value">{{INVOICE_DATE}}</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SERVICE TABLE
+       ══════════════════════════════════════════ -->
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:40px;">S/N</th>
+          <th class="desc-col">SERVICE DESCRIPTION</th>
+          <th style="width:110px;">RATE</th>
+          <th style="width:50px;">QTY</th>
+          <th style="width:120px;">SUB TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{TABLE_ROWS}}
+
+        <!-- Grand Total Row -->
+        <tr class="grand-total-row">
+          <td class="bank-cell" colspan="3">
+            <div class="bank-info">
+              <strong>Banker:</strong>&nbsp; Jaiz Bank Plc &nbsp; Tin No: 20285799-0001<br/>
+              <strong>Account Name:</strong>&nbsp; HALAL AND HARAM DISTINCTION DEVELOPEMENT INITIATIVE<br/>
+              <strong>Account No:</strong>&nbsp; 0007158427 &nbsp; Sort Code: 301150303
+            </div>
+          </td>
+          <td class="grand-label-cell" colspan="1">GRAND TOTAL</td>
+          <td class="grand-amount-cell">{{GRAND_TOTAL}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       FOOTER
+       ══════════════════════════════════════════ -->
+  <div class="footer-section">
+    <!-- Amount in words -->
+    <div class="amount-words-row">
+      <span class="words-label">Total Amount in Words: </span>
+      <span class="words-value">{{AMOUNT_IN_WORDS}}</span>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Terms box -->
+    <div class="terms-box">
+      <div class="terms-label">TERMS:</div>
+      <div class="terms-text">
+        The decision of HCA in all matters of halal certification shall be final.<br/>
+        Payment of appropriate fees as stated above is a sign of commitment of applicant, and all processes shall be
+        carried out with trust and integrity before the issuance of the certificate and label order.
+      </div>
+    </div>
+
+    <!-- Signature -->
+    <div class="signature-section">
+      <div class="signature-image-area"></div>
+      <div class="signature-line">Account Manager's Signature</div>
+    </div>
+  </div>
+
+  <!-- Bottom banner -->
+  <div class="bottom-banner">Thank You For Your Patronage</div>
+
+</body>
+</html>
