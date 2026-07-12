@@ -29,16 +29,17 @@ router.get('/', async (req, res) => {
 // ─── Create new company ────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { name, contact, tel } = req.body;
+    const { name, contact, contactPerson, tel } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Company name is required' });
     }
 
     const company = await Company.create({
-      name: name.trim(),
-      contact: contact?.trim() || '',
-      tel: tel?.trim() || '',
+      name:          name.trim(),
+      contact:       contact?.trim() || '',
+      contactPerson: contactPerson?.trim() || '',
+      tel:           tel?.trim() || '',
     });
 
     res.status(201).json({ message: 'Company added successfully', company });
