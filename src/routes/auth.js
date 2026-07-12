@@ -45,6 +45,7 @@ router.post('/login', async (req, res) => {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
+      domain: isProd ? '.hdiportal.com' : undefined,
       maxAge: 8 * 60 * 60 * 1000, // 8 hours in ms
     });
 

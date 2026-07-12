@@ -59,7 +59,9 @@ const generatePdf = async (data) => {
 
   // Load logo as base64
   const logoPath = path.join(__dirname, '../../templates/hcaLogo.png');
+  const signaturePath = path.join(__dirname, '../../templates/signature.png');
   let logoBase64 = '';
+  let signatureBase64 = '';
   try {
     if (fs.existsSync(logoPath)) {
       const logoBuffer = fs.readFileSync(logoPath);
@@ -67,8 +69,14 @@ const generatePdf = async (data) => {
     } else {
       console.warn('[PDF] Logo not found at:', logoPath);
     }
+    if (fs.existsSync(signaturePath)) {
+      const sigBuffer = fs.readFileSync(signaturePath);
+      signatureBase64 = `data:image/png;base64,${sigBuffer.toString('base64')}`;
+    } else {
+      console.warn('[PDF] Signature not found at:', signaturePath);
+    }
   } catch (err) {
-    console.error('Failed to load logo:', err);
+    console.error('Failed to load assets:', err);
   }
 
   // Build dynamic table rows HTML
@@ -98,6 +106,7 @@ const generatePdf = async (data) => {
 
   const replacements = {
     '{{LOGO_BASE64}}':      logoBase64,
+    '{{SIGNATURE_BASE64}}': signatureBase64,
     '{{INVOICE_NUMBER}}':   data.invoiceNumber,
     '{{CLIENT_NAME}}':      data.company.name,
     '{{CLIENT_CONTACT}}':   data.company.contact || '',
