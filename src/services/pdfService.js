@@ -58,7 +58,7 @@ const generatePdf = async (data) => {
   let html = fs.readFileSync(TEMPLATE_PATH, 'utf8');
 
   // Load logo as base64
-  const logoPath = path.join(__dirname, '../../../frontend/public/hcaLogo.png');
+  const logoPath = path.join(__dirname, '../../templates/hcaLogo.png');
   let logoBase64 = '';
   try {
     if (fs.existsSync(logoPath)) {
