@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
+    "build": "npm install && npx puppeteer browsers install chrome",
     "dev": "nodemon src/index.js",
     "seed": "node src/seed.js"
   },

@@ -3,12 +3,15 @@
  * Renders the invoice HTML template with dynamic data using Puppeteer,
  * and returns a PDF buffer.
  *
- * On Render.com (production), uses @sparticuz/chromium (a pre-bundled Chromium
- * binary that works in serverless/cloud environments with no Chrome installed).
- * On local dev, falls back to regular puppeteer with system Chrome detection.
+ * On Render.com, Chrome must be installed during the build step.
+ * Build command: npm install && npx puppeteer browsers install chrome
+ *
+ * The template uses {{PLACEHOLDER}} tokens that are replaced with actual values.
+ * PDFs are NOT persisted — this function is called both for new invoices
+ * and for on-demand regeneration from stored invoice data.
  */
 
-const puppeteerCore = require('puppeteer-core');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
@@ -43,46 +46,6 @@ const formatDate = (dateInput) => {
   else if (j === 3 && k !== 13) suffix = 'RD';
 
   return `${day}${suffix}/${month}/${year}`;
-};
-
-/**
- * Get the browser launch options — production uses @sparticuz/chromium,
- * local dev uses system Chromium/Chrome.
- */
-const getBrowserOptions = async () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  if (isProduction) {
-    // Use @sparticuz/chromium on Render / serverless
-    const chromium = require('@sparticuz/chromium');
-    // Allow Render to download Chromium if needed
-    chromium.setGraphicsMode = false;
-    const executablePath = await chromium.executablePath();
-    return {
-      executablePath,
-      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      headless: chromium.headless,
-      defaultViewport: chromium.defaultViewport,
-    };
-  }
-
-  // Local dev: try puppeteer's own bundled Chrome
-  try {
-    const puppeteer = require('puppeteer');
-    const executablePath = puppeteer.executablePath();
-    return {
-      executablePath,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      headless: true,
-    };
-  } catch {
-    // Fallback: let puppeteer-core find Chrome automatically
-    return {
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      headless: true,
-      channel: 'chrome',
-    };
-  }
 };
 
 /**
@@ -150,9 +113,25 @@ const generatePdf = async (data) => {
     html = html.replaceAll(token, value);
   }
 
-  // Launch browser
-  const browserOptions = await getBrowserOptions();
-  const browser = await puppeteerCore.launch(browserOptions);
+  // Determine executable path — allow env override for Render/cloud
+  const launchOptions = {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--single-process',
+    ],
+  };
+
+  // Allow overriding Chrome path via environment variable (useful on Render)
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  // Launch Puppeteer
+  const browser = await puppeteer.launch(launchOptions);
 
   try {
     const page = await browser.newPage();
