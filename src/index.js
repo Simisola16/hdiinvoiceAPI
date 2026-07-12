@@ -4,6 +4,20 @@
  */
 
 require('dotenv').config();
+
+// Ensure Chrome is installed for Puppeteer PDF generation on startup
+try {
+  console.log('[Puppeteer] Ensuring Chrome is installed...');
+  const { execSync } = require('child_process');
+  execSync('npx puppeteer browsers install chrome', {
+    stdio: 'inherit',
+    env: { ...process.env, PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false' }
+  });
+  console.log('[Puppeteer] Chrome is ready.');
+} catch (err) {
+  console.error('[Puppeteer] Warning: Chrome installation check failed:', err.message);
+}
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
