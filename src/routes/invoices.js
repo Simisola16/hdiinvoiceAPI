@@ -62,13 +62,33 @@ router.post('/', async (req, res) => {
   try {
     const { companyId, items, serviceDescription, rate, qty, vatPercent, date } = req.body;
 
-    if (!companyId) {
-      return res.status(400).json({ error: 'companyId is required' });
+    let company;
+    if (req.body.company && req.body.company.name) {
+      const companyData = req.body.company;
+      // Find or create by name (case-insensitive) to prevent duplicates
+      company = await Company.findOne({ name: { $regex: new RegExp('^' + companyData.name.trim() + '$', 'i') } });
+      if (company) {
+        // Update details if edited
+        company.contact = companyData.contact !== undefined ? companyData.contact.trim() : company.contact;
+        company.tel = companyData.tel !== undefined ? companyData.tel.trim() : company.tel;
+        company.contactPerson = companyData.contactPerson !== undefined ? companyData.contactPerson.trim() : company.contactPerson;
+        await company.save();
+      } else {
+        company = await Company.create({
+          name:          companyData.name.trim(),
+          contact:       companyData.contact?.trim() || '',
+          tel:           companyData.tel?.trim() || '',
+          contactPerson: companyData.contactPerson?.trim() || '',
+        });
+      }
+    } else if (companyId) {
+      if (!companyId.startsWith('ext_')) {
+        company = await Company.findById(companyId);
+      }
     }
 
-    const company = await Company.findById(companyId);
     if (!company) {
-      return res.status(404).json({ error: 'Company not found' });
+      return res.status(400).json({ error: 'Valid company details or companyId is required' });
     }
 
     // Determine items array
