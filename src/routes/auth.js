@@ -40,13 +40,16 @@ router.post('/login', async (req, res) => {
     );
 
     // Set httpOnly cookie (secure in production)
-    const isProd = process.env.NODE_ENV === 'production';
+    // NOTE: Do NOT set a custom domain — the backend is on onrender.com, not hdiportal.com.
+    // Browsers silently reject cookies where the domain doesn't match the server's actual domain.
+    // With SameSite=None + Secure + withCredentials on the frontend, cross-origin cookies work fine.
+    // Render.com auto-sets NODE_ENV=production and RENDER=true.
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
-      domain: isProd ? '.hdiportal.com' : undefined,
-      maxAge: 8 * 60 * 60 * 1000, // 8 hours in ms
+      secure: isProd,                        // must be true for SameSite=None
+      sameSite: isProd ? 'none' : 'lax',    // SameSite=None required for cross-origin cookies
+      maxAge: 8 * 60 * 60 * 1000,           // 8 hours in ms
     });
 
     res.json({
@@ -59,7 +62,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
   res.clearCookie('token', {
     httpOnly: true,
     secure: isProd,
