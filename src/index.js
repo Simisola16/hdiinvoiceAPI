@@ -17,8 +17,30 @@ const invoiceRoutes = require('./routes/invoices');
 const app = express();
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'https://hdiinvoice.vercel.app',
+  'http://hdiinvoice.vercel.app',
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+  if (process.env.FRONTEND_URL.startsWith('http://')) {
+    allowedOrigins.push(process.env.FRONTEND_URL.replace('http://', 'https://'));
+  }
+}
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, postman, or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,          // allow cookies to be sent cross-origin
 }));
 app.use(express.json());
