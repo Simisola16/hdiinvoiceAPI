@@ -37,6 +37,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://hdiinvoice.vercel.app',
   'http://hdiinvoice.vercel.app',
+  'https://invoice.hdiportal.com',
+  'http://invoice.hdiportal.com',
 ];
 
 if (process.env.FRONTEND_URL) {
@@ -50,7 +52,11 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, postman, or curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || origin.endsWith('vercel.app')) {
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('vercel.app') ||
+      origin.endsWith('hdiportal.com')
+    ) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));
