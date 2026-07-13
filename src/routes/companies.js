@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
     const search = req.query.search || '';
 
     // Fetch from external API
-    const response = await fetch('https://api.hdiportal.com/api/users/external/clients', {
+    const response = await fetch('https://api.hdiportal.com/api/users', {
       headers: {
         'User-Agent': 'Mozilla/5.0',
         'hdi-api-key': process.env.HDIPORTAL_API_KEY || 'wdsvnkknnvdsxzeqaertyhnjkkknfdxxccwerty'
@@ -32,22 +32,41 @@ router.get('/', async (req, res) => {
     const externalUsers = data?.users || [];
 
     // Map external users to our format: { _id, name, contact, tel, contactPerson }
-    // Since external API only gives companyName, we check our local DB to see if we have saved details.
     const localCompanies = await Company.find({});
     const localMap = new Map(localCompanies.map(c => [c.name.toLowerCase().trim(), c]));
 
-    let companies = externalUsers.map(u => {
-      const name = u.companyName || '';
-      const localComp = localMap.get(name.toLowerCase().trim());
-      return {
-        _id: localComp?._id ? localComp._id.toString() : `ext_${u._id}`,
-        name: name,
-        contact: localComp?.contact || '',
-        tel: localComp?.tel || '',
-        contactPerson: localComp?.contactPerson || '',
-        isExternal: !localComp
-      };
-    });
+    let companies = externalUsers
+      .filter(u => u.role === 'company' || u.companyName)
+      .map(u => {
+        const name = (u.companyName || '').trim();
+        const localComp = localMap.get(name.toLowerCase());
+
+        // Extract and construct default address from API
+        let defaultContact = '';
+        if (u.address && u.address !== 'N/A') {
+          defaultContact = u.address.trim();
+          if (u.city && u.city !== 'N/A') defaultContact += `, ${u.city.trim()}`;
+          if (u.state && u.state !== 'N/A') defaultContact += `, ${u.state.trim()}`;
+        }
+
+        // Extract phone number from API (filter out placeholders like '00000000000')
+        let defaultTel = u.companyContact || u.contact || '';
+        if (defaultTel === '00000000000' || defaultTel === 'N/A') {
+          defaultTel = '';
+        }
+
+        // Extract contact person from API
+        const defaultPerson = u.fullName && u.fullName !== 'N/A' ? u.fullName.trim() : '';
+
+        return {
+          _id: localComp?._id ? localComp._id.toString() : `ext_${u._id}`,
+          name: name,
+          contact: localComp?.contact !== undefined ? localComp.contact : defaultContact,
+          tel: localComp?.tel !== undefined ? localComp.tel : defaultTel,
+          contactPerson: localComp?.contactPerson !== undefined ? localComp.contactPerson : defaultPerson,
+          isExternal: !localComp
+        };
+      });
 
     // Apply search filter if provided
     if (search) {
@@ -94,18 +113,50 @@ router.get('/lookup', async (req, res) => {
       name: { $regex: new RegExp('^' + name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
     });
 
-    if (!company) {
-      // Not in local DB yet — return empty fields so frontend shows blank editable inputs
-      return res.json({ found: false, contact: '', tel: '', contactPerson: '' });
+    if (company) {
+      return res.json({
+        found: true,
+        _id: company._id.toString(),
+        contact: company.contact || '',
+        tel: company.tel || '',
+        contactPerson: company.contactPerson || '',
+      });
     }
 
-    res.json({
-      found: true,
-      _id: company._id.toString(),
-      contact: company.contact || '',
-      tel: company.tel || '',
-      contactPerson: company.contactPerson || '',
+    // Not in local DB — try fetching default values from external portal API
+    const response = await fetch('https://api.hdiportal.com/api/users', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'hdi-api-key': process.env.HDIPORTAL_API_KEY || 'wdsvnkknnvdsxzeqaertyhnjkkknfdxxccwerty'
+      }
     });
+
+    if (response.ok) {
+      const data = await response.json();
+      const externalUsers = data?.users || [];
+      const targetUser = externalUsers.find(u => (u.companyName || '').toLowerCase().trim() === name.toLowerCase().trim());
+      if (targetUser) {
+        let defaultContact = '';
+        if (targetUser.address && targetUser.address !== 'N/A') {
+          defaultContact = targetUser.address.trim();
+          if (targetUser.city && targetUser.city !== 'N/A') defaultContact += `, ${targetUser.city.trim()}`;
+          if (targetUser.state && targetUser.state !== 'N/A') defaultContact += `, ${targetUser.state.trim()}`;
+        }
+        let defaultTel = targetUser.companyContact || targetUser.contact || '';
+        if (defaultTel === '00000000000' || defaultTel === 'N/A') defaultTel = '';
+        const defaultPerson = targetUser.fullName && targetUser.fullName !== 'N/A' ? targetUser.fullName.trim() : '';
+
+        return res.json({
+          found: true,
+          contact: defaultContact,
+          tel: defaultTel,
+          contactPerson: defaultPerson
+        });
+      }
+    }
+
+    // Fallback if not found anywhere
+    res.json({ found: false, contact: '', tel: '', contactPerson: '' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
