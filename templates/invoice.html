@@ -12,7 +12,10 @@
       color: #000;
       background: #fff;
       width: 210mm;
-      min-height: 297mm;
+      height: 297mm;
+      position: relative;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     /* ══════════════════════════════════════════
@@ -139,6 +142,7 @@
       min-width: 170px;
       display: inline-block;
       font-weight: bold;
+      text-align: left;
     }
 
     /* ══════════════════════════════════════════
@@ -177,13 +181,15 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding: 2px 24px 8px 24px;
+      width: 100%;
+      margin-top: 5px;
+      margin-bottom: 8px;
     }
 
     .tel-block {
       display: flex;
       align-items: baseline;
-      gap: 4px;
+      flex: 1;
     }
 
     .tel-value {
@@ -193,7 +199,7 @@
       border-bottom: 1.5px solid #000;
       padding-bottom: 1px;
       padding-left: 6px;
-      min-width: 220px;
+      flex: 1;
       min-height: 15px;
     }
 
@@ -201,6 +207,10 @@
       font-size: 12px;
       font-weight: bold;
       color: #000;
+      margin-left: 32px;
+      display: flex;
+      align-items: baseline;
+      white-space: nowrap;
     }
 
     .date-block .date-value {
@@ -346,7 +356,7 @@
       border: 1.5px solid #4e7a3e;
       background-color: #c8d8b0;
       padding: 10px 14px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: flex;
       align-items: flex-start;
       gap: 16px;
@@ -369,15 +379,34 @@
       flex: 1;
     }
 
+    /* Pinned Bottom Footer Container */
+    .invoice-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+    }
+
     /* Signature section */
     .signature-section {
       text-align: right;
-      padding: 6px 24px 12px 24px;
+      padding: 4px 24px 8px 24px;
     }
 
     .signature-image-area {
       min-height: 44px;
       margin-bottom: 2px;
+      width: 210px;
+      margin-left: auto;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .signature-image-area img {
+      max-height: 44px;
     }
 
     .signature-line {
@@ -453,16 +482,14 @@
       <div class="client-label">Address:</div>
       <div class="client-value">{{CLIENT_CONTACT}}</div>
     </div>
-  </div>
-
-  <!-- Tel + Date -->
-  <div class="tel-date-row">
-    <div class="tel-block">
-      <div class="client-label">Tel:</div>
-      <div class="tel-value">{{CLIENT_TEL}}</div>
-    </div>
-    <div class="date-block">
-      Date: <span class="date-value">{{INVOICE_DATE}}</span>
+    <div class="client-row tel-date-row">
+      <div class="tel-block">
+        <div class="client-label">Tel:</div>
+        <div class="tel-value">{{CLIENT_TEL}}</div>
+      </div>
+      <div class="date-block">
+        Date: <span class="date-value">{{INVOICE_DATE}}</span>
+      </div>
     </div>
   </div>
 
@@ -500,36 +527,45 @@
   </div>
 
   <!-- ══════════════════════════════════════════
-       FOOTER
+       FOOTER SECTION (Non-absolute for amount in words)
        ══════════════════════════════════════════ -->
-  <div class="footer-section">
+  <div style="padding: 10px 24px 0 24px;">
     <!-- Amount in words -->
     <div class="amount-words-row">
       <span class="words-label">Total Amount in Words: </span>
       <span class="words-value">{{AMOUNT_IN_WORDS}}</span>
     </div>
+  </div>
 
-    <hr class="divider" />
+  <!-- ══════════════════════════════════════════
+       PINNED BOTTOM FOOTER
+       ══════════════════════════════════════════ -->
+  <div class="invoice-footer">
+    <div style="padding: 0 24px;">
+      <hr class="divider" />
+    </div>
 
     <!-- Terms box -->
-    <div class="terms-box">
-      <div class="terms-label">TERMS:</div>
-      <div class="terms-text">
-        The decision of HCA in all matters of halal certification shall be final.<br/>
-        Payment of appropriate fees as stated above is a sign of commitment of applicant, and all processes shall be
-        carried out with trust and integrity before the issuance of the certificate and label order.
+    <div style="padding: 0 24px;">
+      <div class="terms-box">
+        <div class="terms-label">TERMS:</div>
+        <div class="terms-text">
+          The decision of HCA in all matters of halal certification shall be final.<br/>
+          Payment of appropriate fees as stated above is a sign of commitment of applicant, and all processes shall be
+          carried out with trust and integrity before the issuance of the certificate and label order.
+        </div>
       </div>
     </div>
 
     <!-- Signature -->
     <div class="signature-section">
-      <div class="signature-image-area"><img src="{{SIGNATURE_BASE64}}" alt="Signature" style="max-height:44px;"/></div>
+      <div class="signature-image-area"><img src="{{SIGNATURE_BASE64}}" alt="Signature" /></div>
       <div class="signature-line">Account Manager's Signature</div>
     </div>
-  </div>
 
-  <!-- Bottom banner -->
-  <div class="bottom-banner">Thank You For Your Patronage</div>
+    <!-- Bottom banner -->
+    <div class="bottom-banner">Thank You For Your Patronage</div>
+  </div>
 
 </body>
 </html>

@@ -38,7 +38,7 @@ const allowedOrigins = [
   'https://hdiinvoice.vercel.app',
   'http://hdiinvoice.vercel.app',
   'https://invoice.hdiportal.com',
-  'http://invoice.hdiportal.com',
+  'https://www.invoice.hdiportal.com',
 ];
 
 if (process.env.FRONTEND_URL) {
