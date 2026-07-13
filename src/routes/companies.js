@@ -81,6 +81,36 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ─── Lookup local company by name (for auto-fill of address/tel/contactPerson) ──
+// GET /api/companies/lookup?name=COMPANY_NAME
+// Returns the stored local record so the form can auto-populate when selecting
+// a company that originally came from the external HDI portal API.
+router.get('/lookup', async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name) return res.status(400).json({ error: 'name query param is required' });
+
+    const company = await Company.findOne({
+      name: { $regex: new RegExp('^' + name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
+    });
+
+    if (!company) {
+      // Not in local DB yet — return empty fields so frontend shows blank editable inputs
+      return res.json({ found: false, contact: '', tel: '', contactPerson: '' });
+    }
+
+    res.json({
+      found: true,
+      _id: company._id.toString(),
+      contact: company.contact || '',
+      tel: company.tel || '',
+      contactPerson: company.contactPerson || '',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Create new company ────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
