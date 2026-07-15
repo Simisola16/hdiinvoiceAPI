@@ -23,7 +23,7 @@
        ══════════════════════════════════════════ */
     .header {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       padding: 14px 24px 0 24px;
       gap: 14px;
     }
@@ -45,64 +45,84 @@
     .header-text {
       flex: 1;
       padding-top: 0;
+      text-align: center;
     }
 
     .header-arabic {
-      font-size: 20px;
-      color: #c00000;
+      font-size: 18px;
+      color: #1b3a82;
       font-weight: bold;
-      direction: rtl;
-      text-align: right;
-      margin-bottom: 1px;
+      text-align: center;
+      margin-bottom: 2px;
       font-family: 'Arial', sans-serif;
     }
 
     .header-title {
-      font-size: 30px;
+      font-size: 21px;
       font-weight: 900;
-      color: #1e4620;
-      line-height: 1;
-      font-family: Arial Black, Arial, sans-serif;
-      letter-spacing: -0.5px;
-      text-transform: uppercase;
-    }
-
-    .header-subsidiary {
-      font-size: 9px;
-      color: #000;
-      margin-top: 3px;
-      font-style: italic;
+      color: #1b3a82;
+      line-height: 1.2;
+      font-family: Arial, sans-serif;
       text-align: center;
+      letter-spacing: -0.2px;
     }
 
-    .header-parent {
-      font-size: 11px;
+    .header-subtitle {
+      font-size: 9.5px;
       font-weight: bold;
-      color: #000;
+      color: #1b3a82;
       text-align: center;
+      margin-top: 2px;
+      margin-bottom: 4px;
     }
 
     .header-address {
-      font-size: 8px;
-      color: #c00000;
-      line-height: 1.55;
-      margin-top: 2px;
-      text-align: center;
-    }
-
-    .header-contact {
       font-size: 8.5px;
       color: #000;
+      line-height: 1.4;
       margin-top: 2px;
-      line-height: 1.5;
       text-align: center;
     }
 
-    /* Gold gradient accent strip */
-    .header-strip {
-      height: 8px;
-      background: linear-gradient(to right, #b8860b 0%, #f5d060 30%, #c8a820 50%, #f5d060 70%, #b8860b 100%);
-      margin: 8px 0 0 0;
+    .label-red {
+      color: #c00000;
+      font-weight: bold;
+    }
+
+    .text-black {
+      color: #000;
+    }
+
+    .header-banner {
+      background-color: #1e4620;
+      color: #fff;
+      text-align: center;
+      padding: 5px 10px;
+      margin-top: 6px;
+      font-size: 8.5px;
+      line-height: 1.4;
+    }
+
+    /* Watermark background */
+    .watermark {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 420px;
+      height: 420px;
+      opacity: 0.06;
+      z-index: -1;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .watermark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     /* ══════════════════════════════════════════
@@ -119,9 +139,8 @@
       font-size: 32px;
       font-weight: 900;
       color: #c00000;
-      font-family: Arial Black, Arial, sans-serif;
+      font-family: Arial, sans-serif;
       letter-spacing: 1px;
-      font-style: italic;
     }
 
     .invoice-number-block {
@@ -235,7 +254,7 @@
     }
 
     thead tr {
-      background-color: #c8d8b0;
+      background-color: #c7e0b5;
     }
 
     thead th {
@@ -297,7 +316,7 @@
     }
 
     tr.grand-total-row td.grand-label-cell {
-      background: #c8d8b0 !important;
+      background: #c7e0b5 !important;
       text-align: center;
       font-size: 13px;
       font-weight: bold;
@@ -305,7 +324,7 @@
     }
 
     tr.grand-total-row td.grand-amount-cell {
-      background: #c8d8b0 !important;
+      background: #c7e0b5 !important;
       text-align: right;
       font-size: 13px;
       font-weight: bold;
@@ -313,15 +332,26 @@
     }
 
     .bank-info {
-      font-size: 8.5px;
+      font-size: 9px;
       color: #000;
       line-height: 1.7;
       font-weight: normal;
     }
 
-    .bank-info strong {
-      font-weight: bold;
+    .bank-underline {
       text-decoration: underline;
+      text-decoration-color: #2e7d32;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+
+    .bank-label {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+
+    .bank-value {
+      color: #000;
     }
 
     /* ══════════════════════════════════════════
@@ -354,7 +384,7 @@
     /* Terms box — exactly as in scan */
     .terms-box {
       border: 1.5px solid #4e7a3e;
-      background-color: #c8d8b0;
+      background-color: #c7e0b5;
       padding: 10px 14px;
       margin-bottom: 12px;
       display: flex;
@@ -433,31 +463,35 @@
 </head>
 <body>
 
+  <!-- Watermark -->
+  <div class="watermark">
+    <img src="{{LOGO_BASE64}}" alt="HDI Watermark" />
+  </div>
+
   <!-- ══════════════════════════════════════════
        HEADER
        ══════════════════════════════════════════ -->
   <div class="header">
     <div class="header-logo">
-      <img src="{{LOGO_BASE64}}" alt="HCA Logo" />
+      <img src="{{LOGO_BASE64}}" alt="HDI Logo" />
     </div>
     <div class="header-text">
-      <div class="header-arabic">هيئة ترخيص منتجات الحلال</div>
-      <div class="header-title">HALAL CERTIFICATION AUTHORITY (HCA)</div>
-      <div class="header-subsidiary">A Subsidiary of</div>
-      <div class="header-parent">Halal &amp; Haram Distinction Development Initiative (HDI)</div>
+      <div class="header-arabic">مبادرة ترسيخ التمييز بين الحلال والحرام</div>
+      <div class="header-title">HALAL AND HARAM DISTINCTION DEVELOPMENT INITIATIVE (HDi)</div>
+      <div class="header-subtitle">(Formerly HALAL CERTIFICATION AUTHORITY (HCA))</div>
       <div class="header-address">
-        <em>Corporate Secretariat:</em> 9a, Wing 1, Abiodun Fasakin St., Anthony Village, Idi-Iroko Bus-Stop, Lagos.<br/>
-        <em>Branch Office:</em> 67, Ladipo Street, Opposite Ladipo Police Post, Mushin, Lagos State.
+        <span class="label-red">Corporate Secretariat:</span> <span class="text-black">9a, Wing 1, Abiodun Fasakin St., Anthony Village, Idi-Iroko Bus-Stop, Lagos.</span><br/>
+        <span class="label-red">Branch Office:</span> <span class="text-black">7, Bozoom St., Suites B40, Fanaha Business Complex Suites (Yauza Suya Spot), Behind AP Plaza, Ademola Adetokunbo Crescent, Wuse 2, FCT, Abuja, Nigeria.</span>
       </div>
-      <div class="header-contact">
-        <em>Tel:</em> 08023519433, 08023470542, 08037218855<br/>
-        <em>Website:</em> www.halalcert.com.ng &nbsp;|&nbsp; <em>E-mail:</em> info@halalcert.com.ng
+      <div class="header-banner">
+        <div>Tel: 08023519433, 08023470542, 08037218855</div>
+        <div>Website: www.halalcert.com.ng &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; E-mail: info@halalcert.com.ng</div>
       </div>
     </div>
   </div>
 
-  <!-- Gold gradient strip -->
-  <div class="header-strip"></div>
+  <!-- Spacer to separate header from content -->
+  <div style="height: 12px;"></div>
 
   <!-- ══════════════════════════════════════════
        INVOICE TITLE + NUMBER
@@ -479,7 +513,7 @@
       <div class="client-value">{{CLIENT_NAME}}</div>
     </div>
     <div class="client-row">
-      <div class="client-label">Address:</div>
+      <div class="client-label">Contact:</div>
       <div class="client-value">{{CLIENT_CONTACT}}</div>
     </div>
     <div class="client-row tel-date-row">
@@ -514,9 +548,9 @@
         <tr class="grand-total-row">
           <td class="bank-cell" colspan="3">
             <div class="bank-info">
-              <strong>Banker:</strong>&nbsp; Jaiz Bank Plc &nbsp; Tin No: 20285799-0001<br/>
-              <strong>Account Name:</strong>&nbsp; HALAL AND HARAM DISTINCTION DEVELOPEMENT INITIATIVE<br/>
-              <strong>Account No:</strong>&nbsp; 0007158427 &nbsp; Sort Code: 301150303
+              <span class="bank-underline"><span class="bank-label">Banker:</span> <span class="bank-value">Jaiz Bank Plc</span></span><br/>
+              <span class="bank-underline"><span class="bank-label">Account Name:</span> <span class="bank-value">HALAL AND HARAM DISTINCTION DEVELOPEMENT INITIATIVE</span></span><br/>
+              <span class="bank-underline"><span class="bank-label">Account no:</span> <span class="bank-value">0007158427</span></span> &nbsp;&nbsp;&nbsp;&nbsp; <span class="bank-underline"><span class="bank-label">Sort Code:</span> <span class="bank-value">301150303</span></span>
             </div>
           </td>
           <td class="grand-label-cell" colspan="1">GRAND TOTAL</td>
