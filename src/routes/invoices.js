@@ -96,6 +96,8 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Valid company details or companyId is required' });
     }
 
+    console.log('[Invoice Create Request] Body:', req.body);
+
     // Determine items array
     let invoiceItems = items;
     if (!invoiceItems || !Array.isArray(invoiceItems) || invoiceItems.length === 0) {
@@ -127,6 +129,8 @@ router.post('/', async (req, res) => {
     const vatPct = vatPercent !== undefined ? Number(vatPercent) : 7.5;
     const vatAmount = parseFloat((vatBase * (vatPct / 100)).toFixed(2));
     const grandTotal = parseFloat((vatBase + vatAmount).toFixed(2));
+
+    console.log('[Invoice Calc] subTotal:', subTotal, 'discPct:', discPct, 'discountAmount:', discountAmount, 'vatBase:', vatBase, 'vatAmount:', vatAmount, 'grandTotal:', grandTotal);
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
