@@ -17,6 +17,9 @@ const invoiceSchema = new mongoose.Schema(
       }
     ],
     subTotal:           { type: Number, required: true },
+    // Discount applied before VAT
+    discountPercent:    { type: Number, default: 0 },
+    discountAmount:     { type: Number, default: 0 },
     vatPercent:         { type: Number, default: 7.5 },
     vatAmount:          { type: Number, required: true },
     grandTotal:         { type: Number, required: true },
@@ -26,6 +29,9 @@ const invoiceSchema = new mongoose.Schema(
     createdBy:          { type: String, required: true },
     // Reference to the user document for traceability
     createdByUser:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    // Payment status
+    paid:               { type: Boolean, default: false },
+    paidAt:             { type: Date, default: null },
   },
   { timestamps: true }
 );

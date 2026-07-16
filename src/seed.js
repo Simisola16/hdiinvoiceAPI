@@ -22,7 +22,8 @@ const seed = async () => {
 
     const passwordHash = await bcrypt.hash('abc123', 12);
     await User.create({
-      name:         'HCA Admin',
+      name:         'HDIAdmin',
+
       email:        'admin@halalcert.com.ng',
       username:     'halal',
       passwordHash,

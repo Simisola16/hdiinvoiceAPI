@@ -1,8 +1,9 @@
 /**
  * Invoice Routes
- * GET  /api/invoices          — list invoices (supports filters)
- * POST /api/invoices          — create invoice + return PDF
- * GET  /api/invoices/:id/pdf  — regenerate + download PDF for existing invoice
+ * GET   /api/invoices          — list invoices (supports filters)
+ * POST  /api/invoices          — create invoice + return PDF
+ * PATCH /api/invoices/:id/paid — toggle paid status
+ * GET   /api/invoices/:id/pdf  — regenerate + download PDF for existing invoice
  */
 
 const router = require('express').Router();
@@ -19,7 +20,7 @@ router.use(authGuard);
 // ─── List Invoices (with filters) ─────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const { dateFrom, dateTo, amount, companyName } = req.query;
+    const { dateFrom, dateTo, amount, companyName, paid } = req.query;
 
     const filter = {};
 
@@ -47,6 +48,10 @@ router.get('/', async (req, res) => {
       filter.company = { $in: companies.map((c) => c._id) };
     }
 
+    // Paid status filter
+    if (paid === 'true')  filter.paid = true;
+    if (paid === 'false') filter.paid = false;
+
     const invoices = await Invoice.find(filter)
       .populate('company', 'name contact tel')
       .sort({ createdAt: -1 });
@@ -60,7 +65,7 @@ router.get('/', async (req, res) => {
 // ─── Create Invoice + Return PDF ──────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { companyId, items, serviceDescription, rate, qty, vatPercent, date } = req.body;
+    const { companyId, items, serviceDescription, rate, qty, vatPercent, discountPercent, date } = req.body;
 
     let company;
     if (req.body.company && req.body.company.name) {
@@ -114,9 +119,14 @@ router.post('/', async (req, res) => {
       };
     });
 
+    // Apply discount before VAT
+    const discPct = discountPercent !== undefined ? Number(discountPercent) : 0;
+    const discountAmount = parseFloat((subTotal * (discPct / 100)).toFixed(2));
+    const vatBase = parseFloat((subTotal - discountAmount).toFixed(2));
+
     const vatPct = vatPercent !== undefined ? Number(vatPercent) : 7.5;
-    const vatAmount = parseFloat((subTotal * (vatPct / 100)).toFixed(2));
-    const grandTotal = parseFloat((subTotal + vatAmount).toFixed(2));
+    const vatAmount = parseFloat((vatBase * (vatPct / 100)).toFixed(2));
+    const grandTotal = parseFloat((vatBase + vatAmount).toFixed(2));
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
@@ -130,6 +140,8 @@ router.post('/', async (req, res) => {
       company:            company._id,
       items:              cleanedItems,
       subTotal,
+      discountPercent:    discPct,
+      discountAmount,
       vatPercent:         vatPct,
       vatAmount,
       grandTotal,
@@ -145,6 +157,8 @@ router.post('/', async (req, res) => {
       company,
       items: cleanedItems,
       subTotal,
+      discountPercent: discPct,
+      discountAmount,
       vatPercent: vatPct,
       vatAmount,
       grandTotal,
@@ -161,6 +175,26 @@ router.post('/', async (req, res) => {
     res.send(Buffer.from(pdfBuffer));
   } catch (err) {
     console.error('[Invoice Create Error]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Toggle Paid Status ────────────────────────────────────────────────────────
+router.patch('/:id/paid', async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    // Toggle: if unpaid → mark paid; if paid → mark unpaid
+    invoice.paid = !invoice.paid;
+    invoice.paidAt = invoice.paid ? new Date() : null;
+    await invoice.save();
+
+    res.json({ paid: invoice.paid, paidAt: invoice.paidAt });
+  } catch (err) {
+    console.error('[Invoice Paid Error]', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -188,6 +222,8 @@ router.get('/:id/pdf', async (req, res) => {
       company:            invoice.company,
       items:              invoiceItems,
       subTotal:           invoice.subTotal,
+      discountPercent:    invoice.discountPercent || 0,
+      discountAmount:     invoice.discountAmount || 0,
       vatPercent:         invoice.vatPercent,
       vatAmount:          invoice.vatAmount,
       grandTotal:         invoice.grandTotal,

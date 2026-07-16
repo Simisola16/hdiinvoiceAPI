@@ -81,6 +81,7 @@ const generatePdf = async (data) => {
 
   // Build dynamic table rows HTML
   let tableRowsHtml = '';
+  let extraRowCount = 0;
   if (data.items && Array.isArray(data.items)) {
     data.items.forEach((item, index) => {
       tableRowsHtml += `
@@ -93,10 +94,26 @@ const generatePdf = async (data) => {
         </tr>`;
     });
 
+    // Add DISCOUNT row (only when discount is applied)
+    const discPct = Number(data.discountPercent) || 0;
+    const discAmt = Number(data.discountAmount)  || 0;
+    if (discPct > 0) {
+      extraRowCount++;
+      tableRowsHtml += `
+        <tr class="discount-row">
+          <td class="sn-col">${data.items.length + extraRowCount}.</td>
+          <td class="desc-col discount-label">DISCOUNT (${discPct}%)</td>
+          <td></td>
+          <td></td>
+          <td class="amount-col discount-amount">- ${formatCurrency(discAmt)}</td>
+        </tr>`;
+    }
+
     // Add VAT row
+    extraRowCount++;
     tableRowsHtml += `
         <tr>
-          <td class="sn-col">${data.items.length + 1}.</td>
+          <td class="sn-col">${data.items.length + extraRowCount}.</td>
           <td class="desc-col">VAT OF ${data.vatPercent}%</td>
           <td></td>
           <td></td>
