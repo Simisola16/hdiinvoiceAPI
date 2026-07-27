@@ -54,6 +54,7 @@ router.post('/login', async (req, res) => {
 
     res.json({
       message: 'Login successful',
+      token,   // returned in body so frontend can store it (avoids cross-origin cookie issues)
       user: { id: user._id, name: user.name, role: user.role, username: user.username },
     });
   } catch (err) {
