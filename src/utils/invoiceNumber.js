@@ -14,7 +14,7 @@ const Invoice = require('../models/Invoice');
 const generateInvoiceNumber = async () => {
   const now = new Date();
   const yy = String(now.getFullYear()).slice(-2); // e.g. "26" for 2026
-  const prefix = `HCA/${yy}/`;
+  const prefix = `HDI/${yy}/`;
 
   // Find the highest-numbered invoice for this year
   const lastInvoice = await Invoice.findOne({
