@@ -35,21 +35,36 @@ if (process.env.FRONTEND_URL) {
   }
 }
 
-app.use(cors({
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  return (
+    allowedOrigins.includes(origin) ||
+    origin.endsWith('.vercel.app') ||
+    origin.endsWith('vercel.app') ||
+    origin.endsWith('.hdiportal.com') ||
+    origin.endsWith('hdiportal.com') ||
+    origin.includes('localhost') ||
+    origin.includes('127.0.0.1')
+  );
+};
+
+const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, postman, or curl)
-    if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.endsWith('vercel.app') ||
-      origin.endsWith('hdiportal.com')
-    ) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    return callback(null, false);
   },
-  credentials: true,          // allow cookies to be sent cross-origin
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Disposition'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -73,6 +88,10 @@ const connectDB = async () => {
 };
 
 app.use(async (req, res, next) => {
+  // Don't wait on DB connection for OPTIONS preflight checks
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
   await connectDB();
   next();
 });
@@ -91,6 +110,11 @@ app.get('/api/health', (req, res) => {
 // ─── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error('[ERROR]', err.message);
+  const origin = req.headers.origin;
+  if (origin && isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
