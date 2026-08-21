@@ -11,9 +11,16 @@
  * and for on-demand regeneration from stored invoice data.
  */
 
-const puppeteer = require('puppeteer');
+const puppeteerCore = require('puppeteer-core');
 const fs = require('fs');
 const path = require('path');
+
+let chromium;
+try {
+  chromium = require('@sparticuz/chromium');
+} catch (e) {
+  console.warn('[PDF] @sparticuz/chromium not available');
+}
 
 // Path to the invoice HTML template
 const TEMPLATE_PATH = path.join(__dirname, '../../templates/invoice.html');
@@ -146,24 +153,50 @@ const generatePdf = async (data) => {
     html = html.replaceAll(token, value);
   }
 
-  // Determine executable path — allow env override for Render/cloud
-  const launchOptions = {
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-    ],
-  };
+  // Launch browser (Vercel Serverless Chromium or local Puppeteer)
+  let browser;
+  const isServerless = Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.LAMBDA_TASK_ROOT ||
+    process.env.AWS_EXECUTION_ENV
+  );
 
-  // Allow overriding Chrome path via environment variable (useful on Render)
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-    launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (isServerless && chromium) {
+    const executablePath = await chromium.executablePath();
+    browser = await puppeteerCore.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath,
+      headless: chromium.headless,
+    });
+  } else if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    browser = await puppeteerCore.launch({
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    });
+  } else {
+    try {
+      const puppeteer = require('puppeteer');
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      });
+    } catch (err) {
+      if (chromium) {
+        const executablePath = await chromium.executablePath();
+        browser = await puppeteerCore.launch({
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath,
+          headless: chromium.headless,
+        });
+      } else {
+        throw err;
+      }
+    }
   }
-
-  // Launch Puppeteer
-  const browser = await puppeteer.launch(launchOptions);
 
   try {
     const page = await browser.newPage();

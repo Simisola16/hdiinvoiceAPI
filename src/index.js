@@ -5,19 +5,6 @@
 
 require('dotenv').config();
 
-// Ensure Chrome is installed for Puppeteer PDF generation on startup
-try {
-  console.log('[Puppeteer] Ensuring Chrome is installed...');
-  const { execSync } = require('child_process');
-  execSync('npx puppeteer browsers install chrome', {
-    stdio: 'inherit',
-    env: { ...process.env, PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false' }
-  });
-  console.log('[Puppeteer] Chrome is ready.');
-} catch (err) {
-  console.error('[Puppeteer] Warning: Chrome installation check failed:', err.message);
-}
-
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -66,11 +53,40 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// ─── Serverless Database Connection ──────────────────────────────────────────
+let isDbConnected = false;
+const connectDB = async () => {
+  if (isDbConnected || mongoose.connection.readyState >= 1) {
+    return;
+  }
+  if (!process.env.MONGODB_URI) {
+    console.error('[MongoDB] MONGODB_URI is not set in environment');
+    return;
+  }
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    isDbConnected = true;
+    console.log('[MongoDB] Connected successfully');
+  } catch (err) {
+    console.error('[MongoDB] Connection failed:', err.message);
+  }
+};
+
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth',      authRoutes);
 app.use('/api/users',     userRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/invoices',  invoiceRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -78,16 +94,12 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-// ─── Database + Server ───────────────────────────────────────────────────────
+// ─── Local Server Execution ──────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('[MongoDB] Connected successfully');
+if (!process.env.VERCEL) {
+  connectDB().then(() => {
     app.listen(PORT, () => console.log(`[Server] Running on http://localhost:${PORT}`));
-  })
-  .catch((err) => {
-    console.error('[MongoDB] Connection failed:', err.message);
-    process.exit(1);
   });
+}
+
+module.exports = app;
