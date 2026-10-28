@@ -11,7 +11,7 @@ const Invoice = require('../models/Invoice');
 const Company = require('../models/Company');
 const { authGuard } = require('../middleware/auth');
 const { generateInvoiceNumber } = require('../utils/invoiceNumber');
-const { toNairaWords } = require('../utils/numberToWords');
+const { toNairaWords, toCurrencyWords } = require('../utils/numberToWords');
 const { generatePdf } = require('../services/pdfService');
 
 // All invoice routes require authentication
@@ -135,13 +135,23 @@ router.post('/', async (req, res) => {
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
 
+    const validCurrency = req.body.currency === 'USD' ? 'USD' : 'NGN';
+    const validExchangeRate = validCurrency === 'USD'
+      ? (Number(req.body.exchangeRate) > 0 ? Number(req.body.exchangeRate) : 1500)
+      : 1;
+    const grandTotalInNaira = validCurrency === 'USD'
+      ? parseFloat((grandTotal * validExchangeRate).toFixed(2))
+      : grandTotal;
+
     // Convert grand total to words
-    const amountInWords = toNairaWords(grandTotal);
+    const amountInWords = toCurrencyWords(grandTotal, validCurrency, validExchangeRate, grandTotalInNaira);
 
     // Create invoice record in DB
     const invoice = await Invoice.create({
       invoiceNumber,
       company:            company._id,
+      currency:           validCurrency,
+      exchangeRate:       validExchangeRate,
       items:              cleanedItems,
       subTotal,
       discountPercent:    discPct,
@@ -149,6 +159,7 @@ router.post('/', async (req, res) => {
       vatPercent:         vatPct,
       vatAmount,
       grandTotal,
+      grandTotalInNaira,
       amountInWords,
       date:               date ? new Date(date) : new Date(),
       createdBy:          req.user.name,
@@ -159,6 +170,8 @@ router.post('/', async (req, res) => {
     const pdfBuffer = await generatePdf({
       invoiceNumber,
       company,
+      currency: validCurrency,
+      exchangeRate: validExchangeRate,
       items: cleanedItems,
       subTotal,
       discountPercent: discPct,
@@ -166,6 +179,7 @@ router.post('/', async (req, res) => {
       vatPercent: vatPct,
       vatAmount,
       grandTotal,
+      grandTotalInNaira,
       amountInWords,
       date: invoice.date,
     });
@@ -221,9 +235,19 @@ router.get('/:id/pdf', async (req, res) => {
       }];
     }
 
+    const validCurrency = invoice.currency || 'NGN';
+    const validExchangeRate = invoice.exchangeRate || 1;
+    const grandTotalInNaira = invoice.grandTotalInNaira || (
+      validCurrency === 'USD'
+        ? parseFloat((invoice.grandTotal * validExchangeRate).toFixed(2))
+        : invoice.grandTotal
+    );
+
     const pdfBuffer = await generatePdf({
       invoiceNumber:      invoice.invoiceNumber,
       company:            invoice.company,
+      currency:           validCurrency,
+      exchangeRate:       validExchangeRate,
       items:              invoiceItems,
       subTotal:           invoice.subTotal,
       discountPercent:    invoice.discountPercent || 0,
@@ -231,6 +255,7 @@ router.get('/:id/pdf', async (req, res) => {
       vatPercent:         invoice.vatPercent,
       vatAmount:          invoice.vatAmount,
       grandTotal:         invoice.grandTotal,
+      grandTotalInNaira,
       amountInWords:      invoice.amountInWords,
       date:               invoice.date,
     });
@@ -243,6 +268,21 @@ router.get('/:id/pdf', async (req, res) => {
     res.send(Buffer.from(pdfBuffer));
   } catch (err) {
     console.error('[Invoice PDF Error]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Delete Invoice ──────────────────────────────────────────────────────────
+router.delete('/:id', async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    await Invoice.deleteOne({ _id: req.params.id });
+    res.json({ message: 'Invoice deleted successfully', id: req.params.id });
+  } catch (err) {
+    console.error('[Invoice Delete Error]', err);
     res.status(500).json({ error: err.message });
   }
 });

@@ -93,6 +93,13 @@ const generatePdf = async (data) => {
     console.error('Failed to load assets:', err);
   }
 
+  const isUsd = data.currency === 'USD';
+  const sym = isUsd ? '$' : '₦';
+  const exchangeRate = Number(data.exchangeRate) || 1;
+  const grandTotalInNaira = data.grandTotalInNaira != null
+    ? Number(data.grandTotalInNaira)
+    : (isUsd ? Number(data.grandTotal) * exchangeRate : Number(data.grandTotal));
+
   // Build dynamic table rows HTML
   let tableRowsHtml = '';
   let extraRowCount = 0;
@@ -102,9 +109,9 @@ const generatePdf = async (data) => {
         <tr>
           <td class="sn-col">${index + 1}.</td>
           <td class="desc-col">${item.description}</td>
-          <td class="amount-col">${formatCurrency(item.rate)}</td>
+          <td class="amount-col">${sym}${formatCurrency(item.rate)}</td>
           <td>${item.qty}</td>
-          <td class="amount-col">${formatCurrency(item.rate * item.qty)}</td>
+          <td class="amount-col">${sym}${formatCurrency(item.rate * item.qty)}</td>
         </tr>`;
     });
 
@@ -119,7 +126,7 @@ const generatePdf = async (data) => {
           <td class="desc-col discount-label">DISCOUNT (${discPct}%)</td>
           <td></td>
           <td></td>
-          <td class="amount-col discount-amount">- ${formatCurrency(discAmt)}</td>
+          <td class="amount-col discount-amount">- ${sym}${formatCurrency(discAmt)}</td>
         </tr>`;
     }
 
@@ -131,9 +138,17 @@ const generatePdf = async (data) => {
           <td class="desc-col">VAT OF ${data.vatPercent}%</td>
           <td></td>
           <td></td>
-          <td class="amount-col">${formatCurrency(data.vatAmount)}</td>
+          <td class="amount-col">${sym}${formatCurrency(data.vatAmount)}</td>
         </tr>`;
   }
+
+  const grandTotalDisplay = isUsd
+    ? `$${formatCurrency(data.grandTotal)}<div style="font-size: 9.5px; font-weight: bold; color: #1e4620; margin-top: 3px;">(₦${formatCurrency(grandTotalInNaira)})</div>`
+    : `₦${formatCurrency(data.grandTotal)}`;
+
+  const currencyNote = isUsd
+    ? `<br/><div style="margin-top: 4px; padding: 3px 6px; background-color: #e8f4fd; border: 1px solid #b8daff; border-radius: 3px; font-size: 8.5px; color: #1b3a82; font-weight: bold; display: inline-block;">* FX Rate: $1.00 = ₦${formatCurrency(exchangeRate)} &nbsp;|&nbsp; Payable Naira Equivalent: ₦${formatCurrency(grandTotalInNaira)}</div>`
+    : '';
 
   const replacements = {
     '{{LOGO_BASE64}}':      logoBase64,
@@ -143,8 +158,11 @@ const generatePdf = async (data) => {
     '{{CLIENT_CONTACT}}':   data.company.contact || '',
     '{{CLIENT_TEL}}':       data.company.tel || '',
     '{{INVOICE_DATE}}':     formatDate(data.date),
+    '{{RATE_HEADER}}':      isUsd ? 'RATE ($)' : 'RATE (₦)',
+    '{{SUBTOTAL_HEADER}}':  isUsd ? 'SUB TOTAL ($)' : 'SUB TOTAL (₦)',
     '{{TABLE_ROWS}}':       tableRowsHtml,
-    '{{GRAND_TOTAL}}':      `N${formatCurrency(data.grandTotal)}`,
+    '{{CURRENCY_NOTE}}':    currencyNote,
+    '{{GRAND_TOTAL}}':      grandTotalDisplay,
     '{{AMOUNT_IN_WORDS}}':  data.amountInWords,
   };
 

@@ -9,6 +9,8 @@ const invoiceSchema = new mongoose.Schema(
   {
     invoiceNumber:      { type: String, required: true, unique: true },
     company:            { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+    currency:           { type: String, enum: ['NGN', 'USD'], default: 'NGN' },
+    exchangeRate:       { type: Number, default: 1 },
     items: [
       {
         description: { type: String, required: true },
@@ -23,6 +25,7 @@ const invoiceSchema = new mongoose.Schema(
     vatPercent:         { type: Number, default: 7.5 },
     vatAmount:          { type: Number, required: true },
     grandTotal:         { type: Number, required: true },
+    grandTotalInNaira:  { type: Number },
     amountInWords:      { type: String, required: true },
     date:               { type: Date, default: Date.now },
     // Human-readable name of the creator (stored as string for display — survives user deletion)
