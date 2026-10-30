@@ -143,12 +143,10 @@ const generatePdf = async (data) => {
   }
 
   const grandTotalDisplay = isUsd
-    ? `$${formatCurrency(data.grandTotal)}<div style="font-size: 9.5px; font-weight: bold; color: #1e4620; margin-top: 3px;">(₦${formatCurrency(grandTotalInNaira)})</div>`
+    ? `$${formatCurrency(data.grandTotal)}`
     : `₦${formatCurrency(data.grandTotal)}`;
 
-  const currencyNote = isUsd
-    ? `<br/><div style="margin-top: 4px; padding: 3px 6px; background-color: #e8f4fd; border: 1px solid #b8daff; border-radius: 3px; font-size: 8.5px; color: #1b3a82; font-weight: bold; display: inline-block;">* FX Rate: $1.00 = ₦${formatCurrency(exchangeRate)} &nbsp;|&nbsp; Payable Naira Equivalent: ₦${formatCurrency(grandTotalInNaira)}</div>`
-    : '';
+  const currencyNote = '';
 
   const replacements = {
     '{{LOGO_BASE64}}':      logoBase64,

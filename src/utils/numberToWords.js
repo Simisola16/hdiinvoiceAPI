@@ -35,12 +35,7 @@ const toCurrencyWords = (amount, currency = 'NGN', exchangeRate = 1, grandTotalI
     }
     usdText += ' ONLY';
 
-    const nairaAmount = grandTotalInNaira != null
-      ? Math.round(grandTotalInNaira)
-      : Math.round(amount * (exchangeRate || 1));
-    const nairaText = `${formatWords(nairaAmount)} NAIRA ONLY`;
-
-    return `${usdText} (EQUIVALENT TO ${nairaText})`;
+    return usdText;
   }
   return toNairaWords(amount);
 };
