@@ -16,6 +16,7 @@ const invoiceSchema = new mongoose.Schema(
         description: { type: String, required: true },
         rate:        { type: Number, required: true },
         qty:         { type: Number, required: true },
+        applyVat:    { type: Boolean, default: true },
       }
     ],
     subTotal:           { type: Number, required: true },

@@ -108,31 +108,41 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Calculate subtotal from items
+    // Calculate subtotal and taxable subtotal from items
     let subTotal = 0;
+    let taxableSubTotal = 0;
     const cleanedItems = invoiceItems.map(item => {
       const rateVal = Number(item.rate || 0);
       const qtyVal = Number(item.qty || 0);
-      subTotal += rateVal * qtyVal;
+      const itemTotal = rateVal * qtyVal;
+      subTotal += itemTotal;
+      const applyVat = item.applyVat !== undefined ? Boolean(item.applyVat) : true;
+      if (applyVat) {
+        taxableSubTotal += itemTotal;
+      }
       return {
         description: item.description?.trim() || 'HALAL CERTIFICATION',
         rate: rateVal,
-        qty: qtyVal
+        qty: qtyVal,
+        applyVat
       };
     });
 
     // Apply discount before VAT
     const discPct = discountPercent !== undefined ? Number(discountPercent) : 0;
     const discountAmount = parseFloat((subTotal * (discPct / 100)).toFixed(2));
-    const vatBase = parseFloat((subTotal - discountAmount).toFixed(2));
+    
+    // Taxable base is discounted proportionally
+    const discMultiplier = discPct > 0 ? (1 - discPct / 100) : 1;
+    const vatBase = parseFloat((taxableSubTotal * discMultiplier).toFixed(2));
 
     const vatPct = (vatPercent !== undefined && vatPercent !== null && vatPercent !== '')
       ? Math.max(0, Number(vatPercent) || 0)
       : 7.5;
     const vatAmount = parseFloat((vatBase * (vatPct / 100)).toFixed(2));
-    const grandTotal = parseFloat((vatBase + vatAmount).toFixed(2));
+    const grandTotal = parseFloat(((subTotal - discountAmount) + vatAmount).toFixed(2));
 
-    console.log('[Invoice Calc] subTotal:', subTotal, 'discPct:', discPct, 'discountAmount:', discountAmount, 'vatBase:', vatBase, 'vatAmount:', vatAmount, 'grandTotal:', grandTotal);
+    console.log('[Invoice Calc] subTotal:', subTotal, 'taxableSubTotal:', taxableSubTotal, 'discPct:', discPct, 'discountAmount:', discountAmount, 'vatBase:', vatBase, 'vatAmount:', vatAmount, 'grandTotal:', grandTotal);
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber();
