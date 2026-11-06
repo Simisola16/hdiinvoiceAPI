@@ -130,16 +130,20 @@ const generatePdf = async (data) => {
         </tr>`;
     }
 
-    // Add VAT row
-    extraRowCount++;
-    tableRowsHtml += `
+    // Add VAT row (only when VAT is applied and > 0)
+    const vatPct = Number(data.vatPercent) || 0;
+    const vatAmt = Number(data.vatAmount)  || 0;
+    if (vatPct > 0 && vatAmt > 0) {
+      extraRowCount++;
+      tableRowsHtml += `
         <tr>
           <td class="sn-col">${data.items.length + extraRowCount}.</td>
-          <td class="desc-col">VAT OF ${data.vatPercent}%</td>
+          <td class="desc-col">VAT OF ${vatPct}%</td>
           <td></td>
           <td></td>
-          <td class="amount-col">${sym}${formatCurrency(data.vatAmount)}</td>
+          <td class="amount-col">${sym}${formatCurrency(vatAmt)}</td>
         </tr>`;
+    }
   }
 
   const grandTotalDisplay = isUsd

@@ -126,7 +126,9 @@ router.post('/', async (req, res) => {
     const discountAmount = parseFloat((subTotal * (discPct / 100)).toFixed(2));
     const vatBase = parseFloat((subTotal - discountAmount).toFixed(2));
 
-    const vatPct = vatPercent !== undefined ? Number(vatPercent) : 7.5;
+    const vatPct = (vatPercent !== undefined && vatPercent !== null && vatPercent !== '')
+      ? Math.max(0, Number(vatPercent) || 0)
+      : 7.5;
     const vatAmount = parseFloat((vatBase * (vatPct / 100)).toFixed(2));
     const grandTotal = parseFloat((vatBase + vatAmount).toFixed(2));
 
